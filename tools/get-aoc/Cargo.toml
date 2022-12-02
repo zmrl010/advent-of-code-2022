@@ -1,0 +1,16 @@
+[package]
+name = "get-aoc"
+version = "0.1.0"
+description = "Command-line utility to fetch and save input for Advent of Code"
+edition = "2021"
+authors = ["zmrl"]
+repository.workspace = true
+
+[dependencies]
+chrono = "^0.4"
+tracing = { version = "^0.1", features = ["attributes"] }
+dotenvy = "^0.15"
+reqwest = { version = "0.11.12", features = ["cookies"] }
+tokio = { version = "1.22", features = ["full"] }
+anyhow = "1"
+clap = { version = "^4.0", features = ["derive", "env"] }
