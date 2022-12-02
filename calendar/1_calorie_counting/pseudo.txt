@@ -1,0 +1,20 @@
+Input is large text file containing integers separated by line.
+Each line represents one source of calories for a given reindeer.
+Each reindeer is separated by an additional blank line.
+
+Acquire input:
+fetch input from source: https://adventofcode.com/2022/day/1/input
+(or be lazy and download it separately)
+
+Overview:
+
+top-level variables: 
+  - maximum (0)
+  - current_sum (0)
+for each line of input:
+  if line is blank (or eof?):
+    maximum = max(current_sum, maximum)
+    current_sum = 0
+  else:
+    number: u16 = line.parse()
+    current_sum += number
