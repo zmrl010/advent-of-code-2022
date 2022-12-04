@@ -48,69 +48,70 @@ impl Ord for Weapon {
     }
 }
 
-pub fn calculate_player_score(input: &str) -> u16 {
+fn parse_left_col(col: &str) -> Weapon {
+    match col {
+        "A" => Weapon::Rock,
+        "B" => Weapon::Paper,
+        "C" => Weapon::Scissors,
+        _ => unreachable!(),
+    }
+}
+
+fn parse_right_col(col: &str) -> Weapon {
+    match col {
+        "X" => Weapon::Rock,
+        "Y" => Weapon::Paper,
+        "Z" => Weapon::Scissors,
+        _ => unreachable!(),
+    }
+}
+
+fn parse_line(line: &str) -> (Weapon, Weapon) {
+    let mut parts = line.split(" ");
+
+    let (opponent, player) = parts.next().zip(parts.next()).expect("expected two values");
+
+    (parse_left_col(opponent), parse_right_col(player))
+}
+
+fn calculate_round_score((opponent, player): (Weapon, Weapon)) -> u16 {
+    let player_score: u16 = match player.cmp(&opponent) {
+        Ordering::Less => 0,
+        Ordering::Equal => 3,
+        Ordering::Greater => 6,
+    };
+
+    player.value() + player_score
+}
+
+pub fn calculate_score(input: &str) -> u16 {
     input
         .trim()
         .split("\n")
-        .map(|line| {
-            let mut parts = line.split(" ");
-            let (opponent, player) = parts.next().zip(parts.next()).expect("expected two values");
-            let opponent = match opponent {
-                "A" => Weapon::Rock,
-                "B" => Weapon::Paper,
-                "C" => Weapon::Scissors,
-                _ => unreachable!(),
-            };
-            let player = match player {
-                "X" => Weapon::Rock,
-                "Y" => Weapon::Paper,
-                "Z" => Weapon::Scissors,
-                _ => unreachable!(),
-            };
-
-            let player_score = match player.cmp(&opponent) {
-                Ordering::Less => 0u16,
-                Ordering::Equal => 3u16,
-                Ordering::Greater => 6u16,
-            };
-
-            player.value() + player_score
-        })
+        .map(parse_line)
+        .map(calculate_round_score)
         .sum()
 }
 
 #[cfg(test)]
 mod tests {
-    use std::{fs, path::PathBuf};
-
     use super::*;
 
     const BASIC_EXAMPLE: &str = "A Y\nB X\nC Z";
 
-    fn read_input() -> anyhow::Result<String> {
-        let mut input_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        input_path.push("input");
-
-        let input = fs::read_to_string(input_path)?;
-
-        Ok(input)
-    }
-
     #[test]
     fn basic_example_should_total_to_15() {
-        let result = calculate_player_score(BASIC_EXAMPLE);
+        let result = calculate_score(BASIC_EXAMPLE);
 
-        assert_eq!(result, 15)
+        assert_eq!(result, 15);
     }
 
     #[test]
-    fn puzzle_input_should_equal_answer() -> anyhow::Result<()> {
-        let input = read_input()?;
+    fn puzzle_input_should_equal_answer() {
+        let input = include_str!("../input");
 
-        let result = calculate_player_score(&input);
+        let result = calculate_score(input);
 
         assert_eq!(result, 10404);
-
-        Ok(())
     }
 }
