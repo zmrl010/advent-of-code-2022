@@ -38,14 +38,12 @@ pub fn calculate_cluster_sum(input: &str) -> Integer {
 
 #[cfg(test)]
 mod tests {
-    use std::{env, fs, path::PathBuf};
-
-    use anyhow::{anyhow, Context};
-
     use super::*;
 
     const BASIC_EXAMPLE: &str =
         "1000 \n2000 \n3000 \n\n4000 \n\n5000 \n6000 \n\n7000 \n8000 \n9000 \n\n10000 \n";
+
+    const INPUT: &str = include_str!("../input");
 
     #[test]
     fn find_max_calorie_cluster_should_be_24000_in_basic_example() {
@@ -63,15 +61,7 @@ mod tests {
 
     #[test]
     fn should_find_max_calorie_cluster_input() -> anyhow::Result<()> {
-        let input_path = {
-            let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            dir.push("input");
-            dir
-        };
-
-        let input = fs::read_to_string(&input_path)
-            .with_context(|| anyhow!("failed to read file at `{}`", input_path.display()))?;
-        let result = find_max_calorie_cluster(input.as_str());
+        let result = find_max_calorie_cluster(INPUT);
 
         assert_eq!(result, Some(72602));
 
@@ -80,15 +70,7 @@ mod tests {
 
     #[test]
     fn should_find_3_max_calorie_clusters_sum_using_input() -> anyhow::Result<()> {
-        let input_path = {
-            let mut dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            dir.push("input");
-            dir
-        };
-
-        let input = fs::read_to_string(&input_path)
-            .with_context(|| anyhow!("failed to read file at `{}`", input_path.display()))?;
-        let result = sum_n_max_calorie_clusters(input.as_str(), 3);
+        let result = sum_n_max_calorie_clusters(INPUT, 3);
 
         assert_eq!(result, 207410);
 

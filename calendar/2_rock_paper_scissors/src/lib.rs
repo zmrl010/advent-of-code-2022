@@ -125,7 +125,7 @@ fn parse_line(line: &str) -> (Weapon, Weapon) {
 /// altered line parser after we are told that the 2nd column is actually
 /// whether you should win, lose, or draw
 ///
-/// see: [`parse_right_col_ord`]
+/// see: [`decrypt_right_ord`]
 fn parse_line_altered(line: &str) -> (Weapon, Weapon) {
     let (opponent, player) = split_line_parts(line);
 
@@ -174,6 +174,8 @@ mod tests {
 
     const BASIC_EXAMPLE: &str = "A Y\nB X\nC Z";
 
+    const INPUT: &str = include_str!("../input");
+
     #[test]
     fn basic_example_should_total_to_15() {
         let result = calculate_score(BASIC_EXAMPLE);
@@ -183,9 +185,7 @@ mod tests {
 
     #[test]
     fn puzzle_input_should_equal_answer() {
-        let input = include_str!("../input");
-
-        let result = calculate_score(input);
+        let result = calculate_score(INPUT);
 
         assert_eq!(result, 10404);
     }
@@ -199,9 +199,7 @@ mod tests {
 
     #[test]
     fn part2_puzzle_input_should_equal_answer() {
-        let input = include_str!("../input");
-
-        let result = calculate_score_part2(input);
+        let result = calculate_score_part2(INPUT);
 
         assert_eq!(result, 10334);
     }
