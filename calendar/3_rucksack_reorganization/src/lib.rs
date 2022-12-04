@@ -2,17 +2,18 @@ use std::collections::HashSet;
 
 pub fn calculate_items_sum(input: &str) -> u32 {
     input
-        .trim()
         .lines()
         .map(|line| line.trim())
         .map(|line| line.split_at(line.len() / 2))
+        .map(|(a, b)| (a.chars(), b.chars()))
         .map(|(a, b)| -> u32 {
-            let a: HashSet<char> = HashSet::from_iter(a.chars());
-            let b: HashSet<char> = HashSet::from_iter(b.chars());
+            let a: HashSet<char> = HashSet::from_iter(a);
+            let b: HashSet<char> = HashSet::from_iter(b);
 
-            let items = a.iter().filter(|item| b.contains(item));
-
-            items.map(get_item_value).sum()
+            a.iter()
+                .filter(|item| b.contains(item))
+                .map(get_item_value)
+                .sum()
         })
         .sum()
 }
