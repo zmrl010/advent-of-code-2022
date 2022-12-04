@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use std::collections::HashSet;
 
 pub fn calculate_items_sum(input: &str) -> u32 {
@@ -12,6 +13,31 @@ pub fn calculate_items_sum(input: &str) -> u32 {
 
             a.iter()
                 .filter(|item| b.contains(item))
+                .map(get_item_value)
+                .sum()
+        })
+        .sum()
+}
+
+/// part 2 entrypoint to calculate common sum of priorities between items shared by the entire group.
+/// Group is delimitated by group_size, but the puzzle sets it at 3
+///
+pub fn calculate_common_items_sum(input: &str, group_size: usize) -> u32 {
+    input
+        .lines()
+        .chunks(group_size)
+        .into_iter()
+        .map(|group| -> u32 {
+            group
+                .map(|line| line.trim())
+                .map(|line| -> HashSet<char> { HashSet::from_iter(line.chars()) })
+                .reduce(
+                    |intersection: HashSet<char>, set: HashSet<char>| -> HashSet<char> {
+                        intersection.intersection(&set).cloned().collect()
+                    },
+                )
+                .unwrap_or_default()
+                .iter()
                 .map(get_item_value)
                 .sum()
         })
@@ -43,6 +69,8 @@ mod tests {
     ttgJtRGJQctTZtZT
     CrZsJsPPZsGzwwsLwLmpwMDw";
 
+    const INPUT: &str = include_str!("../input");
+
     #[test]
     fn basic_example_should_result_in_157() {
         let result = calculate_items_sum(BASIC_EXAMPLE);
@@ -51,11 +79,23 @@ mod tests {
     }
 
     #[test]
-    fn input_should_result_in_value() {
-        let input = include_str!("../input");
+    fn part2_basic_example_should_result_in_70() {
+        let result = calculate_common_items_sum(BASIC_EXAMPLE, 3);
 
-        let result = calculate_items_sum(input);
+        assert_eq!(result, 70)
+    }
+
+    #[test]
+    fn input_should_result_in_value() {
+        let result = calculate_items_sum(INPUT);
 
         assert_eq!(result, 8105);
+    }
+
+    #[test]
+    fn part2_input_should_result_in_value() {
+        let result = calculate_common_items_sum(INPUT, 3);
+
+        assert_eq!(result, 2363);
     }
 }
