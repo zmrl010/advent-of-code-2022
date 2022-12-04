@@ -1,6 +1,6 @@
 use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub enum Weapon {
     Rock,
     Paper,
@@ -13,6 +13,29 @@ impl Weapon {
             Weapon::Rock => 1,
             Weapon::Paper => 2,
             Weapon::Scissors => 3,
+        }
+    }
+
+    /// Return a copy of the weapon
+    pub fn get_equal(&self) -> Self {
+        self.clone()
+    }
+
+    /// Return weapon that is weak to self
+    pub fn get_lesser(&self) -> Self {
+        match self {
+            Self::Rock => Self::Scissors,
+            Self::Paper => Self::Rock,
+            Self::Scissors => Self::Paper,
+        }
+    }
+
+    /// Return weapon that is strong against self
+    pub fn get_greater(&self) -> Self {
+        match self {
+            Self::Rock => Self::Paper,
+            Self::Paper => Self::Scissors,
+            Self::Scissors => Self::Rock,
         }
     }
 }
@@ -48,7 +71,11 @@ impl Ord for Weapon {
     }
 }
 
-fn parse_left_col(col: &str) -> Weapon {
+/// Decrypt left column
+/// * A for Rock
+/// * B for Paper
+/// * C for Scissors
+fn decrypt_left(col: &str) -> Weapon {
     match col {
         "A" => Weapon::Rock,
         "B" => Weapon::Paper,
@@ -57,7 +84,11 @@ fn parse_left_col(col: &str) -> Weapon {
     }
 }
 
-fn parse_right_col(col: &str) -> Weapon {
+/// Decrypt right column (part 1)
+/// * X for Rock
+/// * Y for Paper
+/// * Z for Scissors
+fn decrypt_right(col: &str) -> Weapon {
     match col {
         "X" => Weapon::Rock,
         "Y" => Weapon::Paper,
@@ -66,12 +97,47 @@ fn parse_right_col(col: &str) -> Weapon {
     }
 }
 
-fn parse_line(line: &str) -> (Weapon, Weapon) {
+/// Decrypt right column (part 2)
+/// * X for Less
+/// * Y for Equal
+/// * Z for Greater
+fn decrypt_right_ord(col: &str) -> Ordering {
+    match col {
+        "X" => Ordering::Less,
+        "Y" => Ordering::Equal,
+        "Z" => Ordering::Greater,
+        _ => unreachable!(),
+    }
+}
+
+fn split_line_parts(line: &str) -> (&str, &str) {
     let mut parts = line.split(" ");
 
-    let (opponent, player) = parts.next().zip(parts.next()).expect("expected two values");
+    parts.next().zip(parts.next()).expect("expected two values")
+}
 
-    (parse_left_col(opponent), parse_right_col(player))
+fn parse_line(line: &str) -> (Weapon, Weapon) {
+    let (opponent, player) = split_line_parts(line);
+
+    (decrypt_left(opponent), decrypt_right(player))
+}
+
+/// altered line parser after we are told that the 2nd column is actually
+/// whether you should win, lose, or draw
+///
+/// see: [`parse_right_col_ord`]
+fn parse_line_altered(line: &str) -> (Weapon, Weapon) {
+    let (opponent, player) = split_line_parts(line);
+
+    let (opponent, player) = (decrypt_left(opponent), decrypt_right_ord(player));
+
+    let player = match player {
+        Ordering::Equal => opponent.get_equal(),
+        Ordering::Less => opponent.get_lesser(),
+        Ordering::Greater => opponent.get_greater(),
+    };
+
+    (opponent, player)
 }
 
 fn calculate_round_score((opponent, player): (Weapon, Weapon)) -> u16 {
@@ -89,6 +155,15 @@ pub fn calculate_score(input: &str) -> u16 {
         .trim()
         .split("\n")
         .map(parse_line)
+        .map(calculate_round_score)
+        .sum()
+}
+
+pub fn calculate_score_part2(input: &str) -> u16 {
+    input
+        .trim()
+        .split("\n")
+        .map(parse_line_altered)
         .map(calculate_round_score)
         .sum()
 }
@@ -113,5 +188,21 @@ mod tests {
         let result = calculate_score(input);
 
         assert_eq!(result, 10404);
+    }
+
+    #[test]
+    fn part2_basic_example_should_total_to_12() {
+        let result = calculate_score_part2(BASIC_EXAMPLE);
+
+        assert_eq!(result, 12);
+    }
+
+    #[test]
+    fn part2_puzzle_input_should_equal_answer() {
+        let input = include_str!("../input");
+
+        let result = calculate_score_part2(input);
+
+        assert_eq!(result, 10334);
     }
 }
