@@ -74,7 +74,7 @@ pub mod sync {
     #[tokio::main]
     /// Synchronous entrypoint for blocking [`execute`]
     pub async fn execute() -> anyhow::Result<()> {
-        super::execute().await
+        crate::execute().await
     }
 }
 
