@@ -55,6 +55,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "camp_cleanup"
+version = "0.1.0"
+
+[[package]]
 name = "cc"
 version = "1.0.77"
 source = "registry+https://github.com/rust-lang/crates.io-index"
