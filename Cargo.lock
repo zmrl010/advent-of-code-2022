@@ -340,7 +340,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "get-aoc"
+name = "getaoc"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -350,6 +350,7 @@ dependencies = [
  "reqwest",
  "tokio",
  "tracing",
+ "url",
 ]
 
 [[package]]

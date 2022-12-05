@@ -1,11 +1,14 @@
 use chrono::{Datelike, Local};
 
-pub fn this_year() -> u16 {
+pub type Year = u16;
+pub type Day = u8;
+
+pub fn this_year() -> Year {
     let local = Local::now();
-    local.year() as u16
+    local.year() as Year
 }
 
-pub fn day_of_month() -> u8 {
+pub fn day_of_month() -> Day {
     let local = Local::now();
-    local.day() as u8
+    local.day() as Day
 }

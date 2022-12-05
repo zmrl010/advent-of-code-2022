@@ -1,13 +1,14 @@
 [package]
-name = "get-aoc"
+name = "getaoc"
 version = "0.1.0"
-description = "Command-line utility to fetch and save input for Advent of Code"
+description = "Command-line utility to fetch puzzle input for Advent of Code"
 edition = "2021"
 authors = ["zmrl"]
 repository.workspace = true
 
 [dependencies]
 chrono = "^0.4"
+url = "^2.3"
 tracing = { version = "^0.1", features = ["attributes"] }
 dotenvy = "^0.15"
 reqwest = { version = "0.11.12", features = ["cookies"] }
