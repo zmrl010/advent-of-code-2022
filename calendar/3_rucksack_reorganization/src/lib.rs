@@ -1,6 +1,7 @@
 use itertools::Itertools;
 use std::collections::HashSet;
 
+/// Part 1 entrypoint.
 pub fn calculate_items_sum(input: &str) -> u32 {
     input
         .lines()
@@ -19,9 +20,8 @@ pub fn calculate_items_sum(input: &str) -> u32 {
         .sum()
 }
 
-/// part 2 entrypoint to calculate common sum of priorities between items shared by the entire group.
-/// Group is delimitated by group_size, but the puzzle sets it at 3
-///
+/// Part 2 entrypoint to calculate common sum of priorities between items shared by the entire group.
+/// Group is delimitated by group_size, but the puzzle sets it at 3.
 pub fn calculate_common_items_sum(input: &str, group_size: usize) -> u32 {
     input
         .lines()
