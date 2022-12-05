@@ -1,30 +1,29 @@
 mod cli;
 mod date;
+mod url;
 
-use std::env;
+use std::{env, path::Path};
 
+use crate::{cli::Cli, url::base_url};
 use anyhow::Context;
-use cli::Cli;
-use reqwest::{cookie::Jar, Client, Url};
+use reqwest::{cookie::Jar, Client};
 use tokio::fs;
 
-const BASE_URL: &str = "https://adventofcode.com/";
 const USER_AGENT: &str = concat!(
     env!("CARGO_PKG_NAME"),
-    " ",
-    concat!("(", env!("CARGO_PKG_REPOSITORY"), "/tools/get-input", ")"),
-    " - ",
+    " (",
+    env!("CARGO_PKG_REPOSITORY"),
+    ") - ",
     env!("CARGO_PKG_VERSION")
 );
 
-/// Create a request client that reads `SESSION` from environment variables for auth
-fn create_client(url: &Url) -> anyhow::Result<Client> {
-    let session_id =
-        env::var("SESSION").context("environment variable `SESSION` should be present")?;
-    let cookie = format!("session={}", session_id);
+/// Create a request client
+fn create_client(session: String) -> anyhow::Result<Client> {
+    let base_url = base_url()?;
+    let cookie = format!("session={session}");
 
     let jar = Jar::default();
-    jar.add_cookie_str(cookie.as_str(), &url);
+    jar.add_cookie_str(cookie.as_str(), &base_url);
 
     let client = Client::builder()
         .user_agent(USER_AGENT)
@@ -35,38 +34,36 @@ fn create_client(url: &Url) -> anyhow::Result<Client> {
     Ok(client)
 }
 
-/// GET text data from `url`
-async fn fetch_data(client: Client, url: Url) -> reqwest::Result<String> {
-    println!("Fetching {:?}...", url);
-
-    let response = client.get(url).send().await?;
-
-    response.text().await
-}
-
-fn input_path(year: u16, day: u8) -> String {
-    format!("{year}/day/{day}/input")
-}
-
 /// Main entry point to fully execute command-line program
 pub async fn execute() -> anyhow::Result<()> {
-    let Cli { year, day, file } = cli::parse_args();
+    let Cli {
+        year,
+        day,
+        outdir,
+        input_filename,
+        session,
+    } = cli::parse_args();
 
-    let base_url: Url = BASE_URL.parse()?;
+    let client = create_client(session)?;
 
-    let client = create_client(&base_url)?;
+    let input_url = url::build_input_url(year, day)?;
 
-    let url = base_url.join(input_path(year, day).as_str())?;
+    let input_data = client.get(input_url).send().await?.text().await?;
+    println!("{}", input_data);
 
-    let data = fetch_data(client, url).await?;
-
-    println!("{}", data);
-
-    fs::write(&file, &data)
-        .await
-        .with_context(|| format!("failed to write data to file at path `{}`", file.display()))?;
+    write_file(&outdir.join(input_filename), input_data).await?;
 
     Ok(())
+}
+
+async fn write_file<P: AsRef<Path>, D: AsRef<[u8]>>(path: &P, data: D) -> anyhow::Result<()> {
+    let result = fs::write(path, &data).await.with_context(|| {
+        format!(
+            "failed to write to file at path `{}`",
+            path.as_ref().display()
+        )
+    })?;
+    Ok(result)
 }
 
 /// Module with synchronous entrypoint
