@@ -1,23 +1,46 @@
+mod id_range;
+
+pub use id_range::{IdRange, Index};
 use std::collections::HashSet;
 
-pub fn count_ranges_that_contain_pair(input: &str) -> usize {
+pub type IdSet = HashSet<Index>;
+
+/// Part 1
+pub fn count_ranges(input: &str) -> usize {
     input
         .lines()
         .map(|line| line.trim())
-        .map(|line| {
-            let (a, b) = line.split_once(',').unwrap();
-            let range_a = a.split_once('-').unwrap();
-            let range_b = b.split_once('-').unwrap();
-
-            let range_a = (range_a.0.parse().unwrap(), range_a.1.parse().unwrap());
-            let range_b = (range_b.0.parse().unwrap(), range_b.1.parse().unwrap());
-
-            let set_a: HashSet<usize> = HashSet::from_iter(range_a.0..=range_a.1);
-            let set_b: HashSet<usize> = HashSet::from_iter(range_b.0..=range_b.1);
-            (set_a, set_b)
-        })
-        .filter(|(set_a, set_b)| set_a.is_subset(set_b) || set_a.is_superset(set_b))
+        .map(parse_id_sets)
+        .filter(subset_or_superset)
         .count()
+}
+
+/// Part 2
+pub fn count_ranges_intersect(input: &str) -> usize {
+    input
+        .lines()
+        .map(|line| line.trim())
+        .map(parse_id_sets)
+        .filter(sets_intersect)
+        .count()
+}
+
+fn sets_intersect((a, b): &(IdSet, IdSet)) -> bool {
+    !a.is_disjoint(b)
+}
+
+fn subset_or_superset((a, b): &(IdSet, IdSet)) -> bool {
+    a.is_subset(b) || a.is_superset(b)
+}
+
+fn parse_id_sets(line: &str) -> (IdSet, IdSet) {
+    let (a, b) = line.split_once(',').unwrap();
+    let range_a: IdRange = a.parse().unwrap();
+    let range_b: IdRange = b.parse().unwrap();
+
+    let set_a: HashSet<Index> = HashSet::from_iter(range_a);
+    let set_b: HashSet<Index> = HashSet::from_iter(range_b);
+    (set_a, set_b)
 }
 
 #[cfg(test)]
@@ -35,15 +58,29 @@ mod tests {
 
     #[test]
     fn basic_example_should_result_in_2() {
-        let result = count_ranges_that_contain_pair(BASIC_EXAMPLE);
+        let result = count_ranges(BASIC_EXAMPLE);
 
         assert_eq!(result, 2)
     }
 
     #[test]
+    fn part2_basic_example_should_result_in_4() {
+        let result = count_ranges_intersect(BASIC_EXAMPLE);
+
+        assert_eq!(result, 4)
+    }
+
+    #[test]
     fn input_should_result_in_value() {
-        let result = count_ranges_that_contain_pair(INPUT);
+        let result = count_ranges(INPUT);
 
         assert_eq!(result, 573);
+    }
+
+    #[test]
+    fn part2_input_should_result_in_value() {
+        let result = count_ranges_intersect(INPUT);
+
+        assert_eq!(result, 867);
     }
 }
