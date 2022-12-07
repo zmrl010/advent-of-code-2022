@@ -1,6 +1,6 @@
 //! # Advent of Code 2022 Day 1
-//! Page: https://adventofcode.com/2022/day/1
-//! Input: https://adventofcode.com/2022/day/1/input
+//! Page: <https://adventofcode.com/2022/day/1>
+//! Input: <https://adventofcode.com/2022/day/1/input>
 
 type Integer = u32;
 

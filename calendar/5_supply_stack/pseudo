@@ -1,0 +1,8 @@
+1. parse input
+  a. split by \n\n to get separate inputs
+  b. parse top part by splitting columns into stacks of char
+  c. parse bottom by removing redundant grammar and
+      creating a struct with each param
+2. evaluate instructions
+3. pop the top of each stack
+4. concat for the answer
