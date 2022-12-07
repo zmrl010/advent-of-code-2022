@@ -50,8 +50,12 @@ impl Iterator for IdRange {
 pub struct ParseRangeError(String);
 
 impl Display for ParseRangeError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_string())
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(
+            f,
+            "ParseRangeError: cannot parse range from string `{}`",
+            self.0
+        )
     }
 }
 
