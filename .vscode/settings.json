@@ -1,5 +1,7 @@
 {
   "cSpell.words": [
     "cratemap"
-  ]
+  ],
+  "editor.inlineSuggest.enabled": true,
+  "editor.inlayHints.enabled": "offUnlessPressed"
 }
