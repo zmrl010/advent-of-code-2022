@@ -11,34 +11,32 @@ pub mod cratemap {
 
     /// Map string keys to crate collections
     #[derive(Debug, PartialEq, Eq, Default)]
-    pub struct CrateMap<V> {
-        map: HashMap<String, V>,
+    pub struct CrateMap {
+        map: HashMap<String, Vec<Crate>>,
     }
 
-    impl<V: Default> CrateMap<V> {
+    impl CrateMap {
         /// Initialize an empty map
         pub fn new() -> Self {
             Default::default()
         }
-    }
 
-    impl<V> CrateMap<V> {
         /// Exposes the entry api from the underlying HashMap
-        pub fn entry(&mut self, key: String) -> Entry<'_, String, V> {
+        pub fn entry(&mut self, key: String) -> Entry<'_, String, Vec<Crate>> {
             self.map.entry(key)
         }
     }
 
-    impl<V> IntoIterator for CrateMap<V> {
-        type Item = (String, V);
-        type IntoIter = IntoIter<String, V>;
+    impl IntoIterator for CrateMap {
+        type Item = (String, Vec<Crate>);
+        type IntoIter = IntoIter<String, Vec<Crate>>;
 
         fn into_iter(self) -> Self::IntoIter {
             self.map.into_iter()
         }
     }
 
-    impl<V: Default + Extend<Crate>> FromIterator<(String, Crate)> for CrateMap<V> {
+    impl FromIterator<(String, Crate)> for CrateMap {
         fn from_iter<T: IntoIterator<Item = (String, Crate)>>(iter: T) -> Self {
             let mut map = Self::new();
 
@@ -51,7 +49,7 @@ pub mod cratemap {
         }
     }
 
-    impl<V: Default + Extend<Crate>> FromStr for CrateMap<V> {
+    impl FromStr for CrateMap {
         type Err = ParseError;
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -68,7 +66,7 @@ pub mod cratemap {
                 .collect();
 
             for (column_index, key) in key_indices {
-                let crates: &mut V = map.entry(key).or_default();
+                let crates: &mut Vec<Crate> = map.entry(key).or_default();
 
                 crates.extend(rows.clone().filter_map(|row| {
                     let char = match row.chars().nth(column_index) {
@@ -79,29 +77,19 @@ pub mod cratemap {
                 }));
             }
 
-            // let map_iterator = rows.flat_map(|row| {
-            //     key_indices.iter().filter_map(|(col_index, key)| {
-            //         let col = match row.chars().nth(*col_index) {
-            //             Some(' ') | None => None,
-            //             Some(col) => Some(col),
-            //         }?;
-            //         Some((key.to_string(), col))
-            //     })
-            // });
-
             Ok(map)
         }
     }
 
     #[cfg(test)]
     mod tests {
-        use crate::{Crate, CrateMap, ParseError};
+        use crate::{CrateMap, ParseError};
 
         const BASIC_EXAMPLE: &str = "    [D]    \n[N] [C]    \n[Z] [M] [P]\n 1   2   3 ";
 
         #[test]
         fn basic_example_should_parse_into_cratemap() -> Result<(), ParseError> {
-            let result: CrateMap<Vec<Crate>> = BASIC_EXAMPLE.parse()?;
+            let result: CrateMap = BASIC_EXAMPLE.parse()?;
 
             let expected = {
                 let mut map = CrateMap::new();

@@ -12,7 +12,7 @@ pub type Crate = char;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-pub fn collect_message(map: CrateMap<Vec<Crate>>) -> String {
+pub fn collect_message(map: CrateMap) -> String {
     let mut chars: Vec<(String, char)> = map
         .into_iter()
         .filter_map(|(key, crates)| {
@@ -27,7 +27,7 @@ pub fn collect_message(map: CrateMap<Vec<Crate>>) -> String {
     chars.iter().map(|(_, value)| value).collect()
 }
 
-fn move_crates_one_by_one(instruction: Instruction, map: &mut CrateMap<Vec<Crate>>) {
+fn move_crates_one_by_one(instruction: Instruction, map: &mut CrateMap) {
     let Instruction {
         num_crates,
         source,
@@ -35,7 +35,7 @@ fn move_crates_one_by_one(instruction: Instruction, map: &mut CrateMap<Vec<Crate
     } = instruction;
 
     let source_values = {
-        let source: &mut Vec<Crate> = map.entry(source.clone()).or_default();
+        let source = map.entry(source.clone()).or_default();
 
         /*
             we need an intermediary vec so we can store the values and drop the mutable
@@ -59,7 +59,7 @@ fn move_crates_one_by_one(instruction: Instruction, map: &mut CrateMap<Vec<Crate
     map.entry(target.clone()).or_default().extend(source_values);
 }
 
-fn move_crates_all(instruction: Instruction, map: &mut CrateMap<Vec<Crate>>) {
+fn move_crates_all(instruction: Instruction, map: &mut CrateMap) {
     let Instruction {
         num_crates,
         source,
@@ -68,7 +68,7 @@ fn move_crates_all(instruction: Instruction, map: &mut CrateMap<Vec<Crate>>) {
     let num_crates = num_crates as usize;
 
     let source_values = {
-        let source: &mut Vec<Crate> = map.entry(source.clone()).or_default();
+        let source = map.entry(source.clone()).or_default();
 
         let at = source.len() - num_crates.min(source.len());
 
@@ -80,7 +80,7 @@ fn move_crates_all(instruction: Instruction, map: &mut CrateMap<Vec<Crate>>) {
     map.entry(target.clone()).or_default().extend(source_values);
 }
 
-pub fn rearrange_crates(input: &str) -> Result<CrateMap<Vec<Crate>>> {
+pub fn rearrange_crates(input: &str) -> Result<CrateMap> {
     let (procedure, mut map) = match parse_input(input) {
         Ok(val) => val,
         Err(e) => return Err(Error::from(e)),
@@ -94,7 +94,7 @@ pub fn rearrange_crates(input: &str) -> Result<CrateMap<Vec<Crate>>> {
 }
 
 /// Part 2 - using a queue data structure to retain order
-pub fn rearrange_crates_part2(input: &str) -> Result<CrateMap<Vec<Crate>>> {
+pub fn rearrange_crates_part2(input: &str) -> Result<CrateMap> {
     let (procedure, mut map) = match parse_input(input) {
         Ok(val) => val,
         Err(e) => return Err(Error::from(e)),
@@ -112,12 +112,12 @@ pub fn rearrange_crates_part2(input: &str) -> Result<CrateMap<Vec<Crate>>> {
 /// * Top half is a map of the crate stacks - [`CrateMap`]
 /// * Bottom half is instructions to rearrange the stacks - [`Procedure`]
 ///
-pub fn parse_input(input: &str) -> Result<(Procedure, CrateMap<Vec<Crate>>), ParseError> {
+pub fn parse_input(input: &str) -> Result<(Procedure, CrateMap), ParseError> {
     let input_parts = input
         .split_once("\n\n")
         .expect(r"input should be separated by 2 newlines `\n\n`");
 
-    let map: CrateMap<Vec<Crate>> = input_parts.0.parse()?;
+    let map: CrateMap = input_parts.0.parse()?;
     let procedure: Procedure = input_parts.1.parse()?;
 
     Ok((procedure, map))
