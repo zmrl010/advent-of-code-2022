@@ -19,9 +19,9 @@ use crate::error::ParseError;
 pub struct Instruction {
     /// number of crates to move
     pub(crate) num_crates: u8,
-    /// key of the stack that crates are moving from
+    /// key of collection that crates are moving from
     pub(crate) source: String,
-    /// key of the stack that crates are moving to
+    /// key of collection that crates are moving to
     pub(crate) target: String,
 }
 
@@ -47,13 +47,11 @@ impl FromStr for Instruction {
             })
         };
 
-        let instruction = Instruction {
+        Ok(Instruction {
             num_crates: next()?.parse().unwrap_or_default(),
             source: next()?.to_string(),
             target: next()?.to_string(),
-        };
-
-        Ok(instruction)
+        })
     }
 }
 
@@ -116,8 +114,6 @@ impl FromStr for Procedure {
             from: s.to_string(),
         })?;
 
-        let procedure = Procedure::from_iter(instructions);
-
-        Ok(procedure)
+        Ok(Procedure::from_iter(instructions))
     }
 }
