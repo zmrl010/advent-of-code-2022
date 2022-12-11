@@ -1,30 +1,63 @@
 mod filesystem;
 
-use filesystem::FileSystem;
+use filesystem::{Directory, Node, NodeTable};
 // fn sum_dirs() {}
 
-enum Command {
-    CD(String),
-    LS,
-}
+fn parse_input(input: &str) -> anyhow::Result<NodeTable> {
+    let mut nodes = NodeTable::new();
 
-fn parse_input(input: &str) -> FileSystem {
-    let mut fs = FileSystem::new();
-    let values = input.lines().map(|line| match line {
-        val if val.starts_with("$") => {
-            let mut args = val.split(' ');
-            let command = args.nth(1).expect("expected command to be 2rd element");
-            let command_args = args
-                .nth(0)
-                .expect("expected command args to be 3rd element");
-        }
-        val if val.starts_with("dir") => {
-            let args = val.split(' ');
-        }
-        _ => unreachable!(),
-    });
+    let mut current_dir_index = nodes.add(Node::Directory(Directory::new("/")));
 
-    fs
+    /*
+        stack that stores the node indices of directories we travel
+        so we can move forward and back with .push() and .pop()
+    */
+    let mut cursor = vec![current_dir_index];
+
+    for line in input.trim().lines() {
+        let args: Vec<&str> = line.split(' ').collect();
+        match args[0] {
+            "$" => match args[1] {
+                "cd" => {
+                    let target_dir = args[2];
+                    if target_dir == ".." {
+                        if let Some(node_index) = cursor.pop() {
+                            current_dir_index = node_index
+                        }
+                    } else {
+                        cursor.push(current_dir_index);
+                        let node = &nodes[current_dir_index];
+                        //
+                        if node.name() == target_dir {}
+
+                        if let Node::Directory(ref cwd) = node {
+                            let child =
+                                cwd.iter().find(|&child| nodes[*child].name() == target_dir);
+
+                            if let Some(target) = child {
+                                current_dir_index = *target
+                            } else {
+                                eprintln!("directory {target_dir} was not found.")
+                            }
+                        }
+                    }
+                }
+                // "ls" => {} we can ignore `ls` because a shift in contexts
+                // would complicate things and our logic already handles the requirements
+                _ => continue,
+            },
+            "dir" => {
+                let dir = Directory::new(args[1]);
+                nodes.add(Node::Directory(dir));
+            }
+            val if val.chars().all(char::is_numeric) => {
+                // add file node
+            }
+            _ => continue,
+        }
+    }
+
+    Ok(nodes)
 }
 
 fn inspect_file_system_dirs(input: &str) {}
