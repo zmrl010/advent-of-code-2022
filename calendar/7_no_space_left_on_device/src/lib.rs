@@ -1,6 +1,6 @@
 mod filesystem;
 
-use filesystem::{Node, NodeIndex, NodeTable};
+use filesystem::{Node, NodeTable};
 
 fn parse_input(input: &str) -> anyhow::Result<NodeTable> {
     let mut nodes = NodeTable::new();
