@@ -1,4 +1,7 @@
-use std::{ops::Index, slice::Iter};
+use std::{
+    ops::{Index, IndexMut},
+    slice::Iter,
+};
 
 use index_vec::IndexVec;
 
@@ -26,6 +29,18 @@ impl NodeTable {
         self.nodes.push(node)
     }
 
+    /// Create a file node and attach it to the nodes collection, returning its index
+    pub fn add_file(&mut self, name: &str, size: Size) -> NodeIndex {
+        let node = Node::file(name, size);
+        self.add(node)
+    }
+
+    /// Create a directory node and attach it to the nodes collection, returning its index
+    pub fn add_dir(&mut self, name: &str) -> NodeIndex {
+        let node = Node::dir(name);
+        self.add(node)
+    }
+
     /// Get a node at index
     pub fn get(&self, index: NodeIndex) -> Option<&Node> {
         self.nodes.get(index)
@@ -37,6 +52,12 @@ impl Index<NodeIndex> for NodeTable {
 
     fn index(&self, index: NodeIndex) -> &Self::Output {
         &self.nodes[index]
+    }
+}
+
+impl IndexMut<NodeIndex> for NodeTable {
+    fn index_mut(&mut self, index: NodeIndex) -> &mut Self::Output {
+        &mut self.nodes[index]
     }
 }
 
@@ -149,5 +170,33 @@ impl Node {
     /// Initialize a directory node
     pub fn dir(name: &str) -> Self {
         Self::Directory(Directory::new(name))
+    }
+
+    /// Get the node's parent index if there is one
+    pub fn parent(&self) -> Option<NodeIndex> {
+        match self {
+            Node::File(f) => f.parent,
+            Node::Directory(d) => d.parent,
+        }
+    }
+
+    /// Set the nodes parent index
+    pub fn set_parent(&mut self, index: NodeIndex) {
+        match self {
+            Node::File(f) => f.parent = Some(index),
+            Node::Directory(d) => d.parent = Some(index),
+        }
+    }
+
+    /// Get the nodes parent directory by cross referencing a node vector with
+    pub fn parent_dir(&self, nodes: &IndexVec<NodeIndex, Node>) -> Option<Directory> {
+        let parent_index = self.parent()?;
+
+        let parent_node = nodes.get(parent_index)?;
+
+        match parent_node {
+            Node::File(_) => unreachable!("parent should not be a file"),
+            Node::Directory(dir) => Some(dir.clone()),
+        }
     }
 }
