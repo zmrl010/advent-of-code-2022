@@ -35,19 +35,14 @@ impl NodeTable {
         self.add(node)
     }
 
-    pub fn iter(&self) -> Iter<'_, Node> {
-        self.nodes.iter()
-    }
-
     /// Create a directory node and attach it to the nodes collection, returning its index
     pub fn add_dir(&mut self, name: &str) -> NodeIndex {
         let node = Node::dir(name);
         self.add(node)
     }
 
-    /// Get a node at index
-    pub fn get(&self, index: NodeIndex) -> Option<&Node> {
-        self.nodes.get(index)
+    pub fn iter(&self) -> Iter<Node> {
+        self.nodes.iter()
     }
 }
 
@@ -138,23 +133,13 @@ pub enum Node {
     Directory(Directory),
 }
 
-// pub fn walk_nodes(root: Node) -> impl Iterator<Item = Node> {
-//     match root {
-//         Node::File { .. } => [root].iter(),
-//         Node::Directory { items, .. } => items.iter().map(|node| walk_nodes(*node)).flatten(),
-//     }
-// }
-
 impl Node {
     /// Calculate the total size of the node and any
     /// subnodes if the node is a directory
     pub fn size(&self, table: &NodeTable) -> Size {
         match self {
             Self::File(file) => file.size(),
-            Self::Directory(dir) => dir.children.iter().fold(0, |acc, i| {
-                let node = &table.nodes[*i];
-                acc + node.size(table)
-            }),
+            Self::Directory(dir) => dir.size(table),
         }
     }
 
@@ -189,18 +174,6 @@ impl Node {
         match self {
             Node::File(f) => f.parent = Some(index),
             Node::Directory(d) => d.parent = Some(index),
-        }
-    }
-
-    /// Get the nodes parent directory by cross referencing a node vector with
-    pub fn parent_dir(&self, table: NodeTable) -> Option<Directory> {
-        let parent_index = self.parent()?;
-
-        let parent_node = table.nodes.get(parent_index)?;
-
-        match parent_node {
-            Node::File(_) => unreachable!("parent should not be a file"),
-            Node::Directory(dir) => Some(dir.clone()),
         }
     }
 }
