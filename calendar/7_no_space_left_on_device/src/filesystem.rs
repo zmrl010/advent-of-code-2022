@@ -35,6 +35,10 @@ impl NodeTable {
         self.add(node)
     }
 
+    pub fn iter(&self) -> Iter<'_, Node> {
+        self.nodes.iter()
+    }
+
     /// Create a directory node and attach it to the nodes collection, returning its index
     pub fn add_dir(&mut self, name: &str) -> NodeIndex {
         let node = Node::dir(name);
@@ -120,10 +124,10 @@ impl Directory {
     }
 
     /// Recursively sum the size of all sub directories and files
-    fn size(&self, nodes: &IndexVec<NodeIndex, Node>) -> Size {
+    fn size(&self, table: &NodeTable) -> Size {
         self.children.iter().fold(0, |acc, i| {
-            let node = &nodes[*i];
-            acc + node.size(nodes)
+            let node = &table.nodes[*i];
+            acc + node.size(table)
         })
     }
 }
@@ -144,12 +148,12 @@ pub enum Node {
 impl Node {
     /// Calculate the total size of the node and any
     /// subnodes if the node is a directory
-    pub fn size(&self, nodes: &IndexVec<NodeIndex, Node>) -> Size {
+    pub fn size(&self, table: &NodeTable) -> Size {
         match self {
             Self::File(file) => file.size(),
             Self::Directory(dir) => dir.children.iter().fold(0, |acc, i| {
-                let node = &nodes[*i];
-                acc + node.size(nodes)
+                let node = &table.nodes[*i];
+                acc + node.size(table)
             }),
         }
     }
@@ -189,10 +193,10 @@ impl Node {
     }
 
     /// Get the nodes parent directory by cross referencing a node vector with
-    pub fn parent_dir(&self, nodes: &IndexVec<NodeIndex, Node>) -> Option<Directory> {
+    pub fn parent_dir(&self, table: NodeTable) -> Option<Directory> {
         let parent_index = self.parent()?;
 
-        let parent_node = nodes.get(parent_index)?;
+        let parent_node = table.nodes.get(parent_index)?;
 
         match parent_node {
             Node::File(_) => unreachable!("parent should not be a file"),

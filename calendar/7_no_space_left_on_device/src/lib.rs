@@ -1,6 +1,6 @@
 mod filesystem;
 
-use filesystem::{Node, NodeTable};
+use filesystem::{Node, NodeTable, NodeIndex};
 
 fn parse_input(input: &str) -> anyhow::Result<NodeTable> {
     let mut nodes = NodeTable::new();
@@ -11,24 +11,38 @@ fn parse_input(input: &str) -> anyhow::Result<NodeTable> {
         let mut parts = line.split(' ');
 
         match parts.nth(0).unwrap() {
+
             "$" => match parts.nth(0).unwrap() {
+
                 "cd" => {
+
                     let node = &nodes[current_dir_index];
 
                     let target_dir = parts.nth(0).unwrap();
+
                     if target_dir == ".." {
+
                         if let Some(node_index) = node.parent() {
+
                             current_dir_index = node_index
+
                         }
+
                     } else {
+
                         if let Node::Directory(ref cwd) = node {
+
                             let child =
                                 cwd.iter().find(|&child| nodes[*child].name() == target_dir);
 
                             if let Some(target) = child {
+
                                 current_dir_index = *target
+
                             } else {
+
                                 eprintln!("directory {target_dir} was not found.")
+
                             }
                         }
                     }
@@ -50,6 +64,7 @@ fn parse_input(input: &str) -> anyhow::Result<NodeTable> {
             }
             val if val.chars().all(char::is_numeric) => {
                 let size: u64 = val.parse()?;
+
                 let name = parts.nth(0).unwrap();
 
                 let index = nodes.add_file(name, size);
@@ -67,9 +82,31 @@ fn parse_input(input: &str) -> anyhow::Result<NodeTable> {
     Ok(nodes)
 }
 
+fn part1(input: &str) -> anyhow::Result<u64> {
+    let node_table = parse_input(input)?;
+
+    let mut total: u64 = 0;
+
+    let root_node = &node_table[NodeIndex::new(0)];
+
+    if let Node::Directory(dir) = root_node {
+        for node_index in dir.iter() {
+            let node = &node_table[*node_index];
+
+            let size = node.size(&node_table);
+
+            if size < 100_000 {
+                total += size
+            }
+        }
+    }
+
+    Ok(total)
+}
+
 #[cfg(test)]
-mod tests {
-    use crate::parse_input;
+mod tests { 
+    use crate::part1;
 
     const BASIC_INPUT: &str = "$ cd /
 $ ls
@@ -97,11 +134,18 @@ $ ls
 
     const INPUTS: [&str; 2] = [BASIC_INPUT, include_str!("../input")];
 
-    const RESULTS: [u32; 2] = [95437, 95437];
+    const RESULTS: [u64; 2] = [95437, 190290];
 
     #[test]
     fn should_take_input_and_find_result() -> anyhow::Result<()> {
-        for input in INPUTS {}
+        let mut i = 0;
+        for input in INPUTS {
+            let total = part1(input)?;
+            
+            assert_eq!(total, RESULTS[i]);
+
+            i += 1;
+        }
 
         assert!(true);
 
