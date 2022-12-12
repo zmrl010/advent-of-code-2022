@@ -1,6 +1,6 @@
 mod filesystem;
 
-use filesystem::{Node, NodeTable, NodeIndex};
+use filesystem::{Node, NodeIndex, NodeTable};
 
 fn parse_input(input: &str) -> anyhow::Result<NodeTable> {
     let mut nodes = NodeTable::new();
@@ -11,38 +11,29 @@ fn parse_input(input: &str) -> anyhow::Result<NodeTable> {
         let mut parts = line.split(' ');
 
         match parts.nth(0).unwrap() {
-
             "$" => match parts.nth(0).unwrap() {
-
                 "cd" => {
-
                     let node = &nodes[current_dir_index];
 
                     let target_dir = parts.nth(0).unwrap();
 
-                    if target_dir == ".." {
-
-                        if let Some(node_index) = node.parent() {
-
-                            current_dir_index = node_index
-
+                    match target_dir {
+                        ".." => {
+                            if let Some(node_index) = node.parent() {
+                                current_dir_index = node_index
+                            }
                         }
+                        "/" => {}
+                        _ => {
+                            if let Node::Directory(ref cwd) = node {
+                                let child =
+                                    cwd.iter().find(|&child| nodes[*child].name() == target_dir);
 
-                    } else {
-
-                        if let Node::Directory(ref cwd) = node {
-
-                            let child =
-                                cwd.iter().find(|&child| nodes[*child].name() == target_dir);
-
-                            if let Some(target) = child {
-
-                                current_dir_index = *target
-
-                            } else {
-
-                                eprintln!("directory {target_dir} was not found.")
-
+                                if let Some(target) = child {
+                                    current_dir_index = *target
+                                } else {
+                                    eprintln!("directory {target_dir} was not found.")
+                                }
                             }
                         }
                     }
@@ -62,8 +53,8 @@ fn parse_input(input: &str) -> anyhow::Result<NodeTable> {
                     cwd.push(index)
                 }
             }
-            val if val.chars().all(char::is_numeric) => {
-                let size: u64 = val.parse()?;
+            value if value.chars().all(char::is_numeric) => {
+                let size: u64 = value.parse()?;
 
                 let name = parts.nth(0).unwrap();
 
@@ -82,31 +73,55 @@ fn parse_input(input: &str) -> anyhow::Result<NodeTable> {
     Ok(nodes)
 }
 
-fn part1(input: &str) -> anyhow::Result<u64> {
+const SIZE_LIMIT_PART1: u64 = 100_100;
+
+pub fn calculate_dir_sums_under_limit(input: &str) -> anyhow::Result<u64> {
     let node_table = parse_input(input)?;
 
-    let mut total: u64 = 0;
-
-    let root_node = &node_table[NodeIndex::new(0)];
-
-    if let Node::Directory(dir) = root_node {
-        for node_index in dir.iter() {
-            let node = &node_table[*node_index];
-
-            let size = node.size(&node_table);
-
-            if size < 100_000 {
-                total += size
-            }
-        }
-    }
+    let total: u64 = node_table
+        .iter()
+        .filter(|&node| matches!(node, Node::Directory(_)))
+        .map(|dir| dir.size(&node_table))
+        .filter(|size| *size < SIZE_LIMIT_PART1)
+        .sum();
 
     Ok(total)
 }
 
+const TOTAL_AVAILABLE_SPACE: u64 = 70_000_000;
+const MINIMUM_SPACE_NEEDED: u64 = 30_000_000;
+const MAXIMUM_SPACE_FOR_USE: u64 = TOTAL_AVAILABLE_SPACE - MINIMUM_SPACE_NEEDED;
+
+/// **Part 2** - Find a directory to delete; One that lets us reach our
+/// goal with the minimal possible
+pub fn find_smallest_viable_dir_size(input: &str) -> anyhow::Result<u64> {
+    let node_table = parse_input(input)?;
+
+    let total_space_used = node_table[0.into()].size(&node_table);
+
+    let mut dir_size: u64 = 0;
+    let mut max_potential_new_size = 0;
+
+    for node in node_table
+        .iter()
+        .filter(|&node| matches!(node, Node::Directory(_)))
+    {
+        let node_size = node.size(&node_table);
+        let potential_new_size = total_space_used - node_size;
+        if potential_new_size <= MAXIMUM_SPACE_FOR_USE
+            && potential_new_size > max_potential_new_size
+        {
+            max_potential_new_size = potential_new_size;
+            dir_size = node_size
+        }
+    }
+
+    Ok(dir_size)
+}
+
 #[cfg(test)]
-mod tests { 
-    use crate::part1;
+mod tests {
+    use crate::{calculate_dir_sums_under_limit, find_smallest_viable_dir_size};
 
     const BASIC_INPUT: &str = "$ cd /
 $ ls
@@ -134,24 +149,35 @@ $ ls
 
     const INPUTS: [&str; 2] = [BASIC_INPUT, include_str!("../input")];
 
-    const RESULTS: [u64; 2] = [95437, 190290];
+    const RESULTS: [u64; 2] = [95437, 1642503];
 
     #[test]
     fn should_take_input_and_find_result() -> anyhow::Result<()> {
         let mut i = 0;
         for input in INPUTS {
-            let total = part1(input)?;
-            
+            let total = calculate_dir_sums_under_limit(input)?;
+
             assert_eq!(total, RESULTS[i]);
 
             i += 1;
         }
 
-        assert!(true);
-
         Ok(())
     }
 
+    const RESULTS_PART2: [u64; 2] = [24933642, 6999588];
+
     #[test]
-    fn part2_should_take_input_and_find_result() {}
+    fn part2_should_take_input_and_find_result() -> anyhow::Result<()> {
+        let mut i = 0;
+        for input in INPUTS {
+            let size = find_smallest_viable_dir_size(input)?;
+
+            assert_eq!(size, RESULTS_PART2[i]);
+
+            i += 1;
+        }
+
+        Ok(())
+    }
 }
