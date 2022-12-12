@@ -1,0 +1,8 @@
+[package]
+name = "treetop_tree_house"
+version = "0.1.0"
+edition = "2021"
+homepage = "https://adventofcode.com/2022/day/8"
+
+[dependencies]
+rayon = "^1.6"
