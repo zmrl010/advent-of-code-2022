@@ -5,4 +5,4 @@ edition = "2021"
 homepage = "https://adventofcode.com/2022/day/8"
 
 [dependencies]
-rayon = "^1.6"
+shared_lib = { path = "../../shared_lib" }

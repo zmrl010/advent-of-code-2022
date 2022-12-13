@@ -1,5 +1,5 @@
 [workspace]
-members = ["./calendar/*", "./tools/*"]
+members = ["./calendar/*", "./tools/*", "./shared_lib"]
 
 [workspace.package]
 repository = "https://github.com/zmrl010/advent-of-code-2022"
