@@ -5,7 +5,12 @@
 //! Credit to [this guide](https://blog.adamchalmers.com/grids-1/)
 //! for most of the implementation
 
-use std::vec::IntoIter;
+use std::{
+    error::Error,
+    fmt::{self, Display, Formatter},
+    str::FromStr,
+    vec::IntoIter,
+};
 
 /// Index for a 2D grid
 #[derive(Clone, Copy, Debug)]
@@ -34,6 +39,35 @@ pub struct Grid<T> {
     items: Vec<T>,
     width: usize,
     height: usize,
+}
+
+#[derive(Debug)]
+pub struct ParseGridError;
+
+impl Display for ParseGridError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "ParseGridError: failed to parse Grid")
+    }
+}
+
+impl Error for ParseGridError {}
+
+impl<T: FromStr> FromStr for Grid<T> {
+    type Err = ParseGridError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let items: Result<Vec<_>, _> = s
+            .trim()
+            .lines()
+            .flat_map(|line| {
+                line.split("")
+                    .filter(|val| *val != "")
+                    .map(|val| val.parse::<T>())
+            })
+            .collect();
+
+        Ok(Self::from(items.map_err(|_| ParseGridError)?))
+    }
 }
 
 impl<T> Grid<T>
