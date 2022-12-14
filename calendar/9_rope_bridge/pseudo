@@ -1,0 +1,13 @@
+1. Parse Input
+  a. Map input.lines
+    i. split lines by " "
+    ii. direction on left side
+    iii. movement amount on right side
+  b. starting at (0, 0), move head {amount} spaces in {direction}
+  c. determine tail position using provided logic
+    i. head and tail must always be touching
+    ii. if head is ever two steps directly up, down, left, or right
+        from the tail, the tail must also move one step in that direction
+    iii. if head & tail aren't touching, and aren't in the same row
+         and column, the tail always moves one step diagonally to keep up
+         

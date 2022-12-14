@@ -13,7 +13,7 @@ use std::{
 };
 
 /// Index for a 2D grid
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Point {
     pub x: usize,
     pub y: usize,
@@ -22,6 +22,25 @@ pub struct Point {
 impl From<(usize, usize)> for Point {
     fn from((x, y): (usize, usize)) -> Self {
         Self { x, y }
+    }
+}
+
+pub trait Touch {
+    /// Compare `self` and `other` to determine if they are touching.
+    fn is_touching(&self, other: &Self) -> bool;
+}
+
+impl Touch for Point {
+    /// Compare `self` and `other` to determine if they are touching.
+    ///
+    /// Touching means that the one point is one step away from the other; including
+    /// left, right, up, down, diagonally, and overlapping.
+    fn is_touching(&self, other: &Self) -> bool {
+        if self == other {
+            return true;
+        }
+
+        self.x.abs_diff(other.x) <= 1 && self.y.abs_diff(other.y) <= 1
     }
 }
 
