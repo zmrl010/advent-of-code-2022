@@ -6,7 +6,7 @@ use std::{
     str::FromStr,
 };
 
-use shared_lib::point;
+use shared_lib::point::{self, Relative};
 
 type Point = point::Point<isize>;
 
@@ -59,97 +59,71 @@ impl Direction {
             Down => Up,
         }
     }
+
+    /// Get a [`Point`] value that can be applied to another [`Point`]
+    /// in order to move it in that direction
+    pub fn to_movement(&self) -> Point {
+        use Direction::*;
+
+        match self {
+            Up => (0, 1).into(),
+            Right => (1, 0).into(),
+            Left => (-1, 0).into(),
+            Down => (0, -1).into(),
+        }
+    }
 }
 
 #[derive(Debug)]
-pub struct Rope {
-    head: Point,
-    tail: Point,
-}
+pub struct Rope(Vec<Point>);
 
 impl Default for Rope {
     fn default() -> Self {
-        Self {
-            head: (0, 0).into(),
-            tail: (0, 0).into(),
-        }
+        Self(vec![(0, 0).into(), (0, 0).into()])
     }
 }
 
 impl Rope {
-    pub fn new() -> Self {
-        Default::default()
+    /// Initialize a new rope with `length` number of points initialized to 0,0
+    pub fn new(length: usize) -> Self {
+        Self(vec![(0, 0).into(); length])
     }
 
-    /// Move `head` one step in `direction` and adjust `tail` accordingly
-    ///
-    /// # Tail Movement Rules
-    ///
-    /// * If `head` is ever two steps directly up, down, left, or right
-    /// from the `tail`, the `tail` **must** also move one step in that direction
-    ///
-    /// * If `head` and `tail` aren't touching, and aren't in the same row
-    /// and column, the `tail` **always** moves one step diagonally to keep up
-    fn step(head: &mut Point, tail: &mut Point, direction: &Direction) {
-        *head = move_point(head, direction);
+    /// get last knot in rope
+    fn tail(&self) -> Option<&Point> {
+        self.0.last()
+    }
 
-        let x_diff = head.x.abs_diff(tail.x);
-        let y_diff = head.y.abs_diff(tail.y);
+    fn move_head(&mut self, direction: &Direction) {
+        self.0[0] += direction.to_movement();
+    }
 
-        if x_diff <= 1 && y_diff <= 1 {
-            return;
+    fn move_tail(&mut self) {
+        let mut prev = self.0[0];
+
+        for point in &mut self.0[1..] {
+            point.move_relative(&prev);
+            prev = *point
         }
+    }
 
-        match (x_diff, y_diff) {
-            // If `head` is ever two steps directly up, down, left, or right
-            // from the `tail`, the `tail` **must** also move one step in that direction
-            (2, 0) => {
-                if head.x > tail.x {
-                    tail.x += 1;
-                } else {
-                    tail.x -= 1;
-                };
-            }
-            (0, 2) => {
-                if head.y > tail.y {
-                    tail.y += 1;
-                } else {
-                    tail.y -= 1;
-                };
-            }
-            // If `head` and `tail` aren't touching, and aren't in the same row
-            // and column, the `tail` **always** moves one step diagonally to keep up
-            (2, 1) | (1, 2) => {
-                if head.x > tail.x {
-                    tail.x += 1;
-                } else {
-                    tail.x -= 1;
-                };
-                if head.y > tail.y {
-                    tail.y += 1;
-                } else {
-                    tail.y -= 1;
-                };
-            }
-            _ => unreachable!(),
-        }
+    fn step(&mut self, direction: &Direction) {
+        move_rope(self, direction)
     }
 }
 
-/// Move a [`Point`] a single step in `direction`
+/// Move `head` one step in `direction` and adjust `tail` accordingly
 ///
-/// # Returns
+/// # Tail Movement Rules
 ///
-/// New point with value adjusted depending on direction
-fn move_point(point: &Point, dir: &Direction) -> Point {
-    use Direction::*;
-
-    match dir {
-        Up => (point.x, point.y + 1).into(),
-        Right => (point.x + 1, point.y).into(),
-        Left => (point.x - 1, point.y).into(),
-        Down => (point.x, point.y - 1).into(),
-    }
+/// * If `head` is ever two steps directly up, down, left, or right
+/// from the `tail`, the `tail` **must** also move one step in that direction
+///
+/// * If `head` and `tail` aren't touching, and aren't in the same row
+/// and column, the `tail` **always** moves one step diagonally to keep up
+fn move_rope(rope: &mut Rope, direction: &Direction) {
+    rope.move_head(direction);
+    rope.move_tail();
 }
 
 #[derive(Debug)]
@@ -204,21 +178,39 @@ pub fn parse_input(input: &str) -> Result<Vec<Motion>, ParseError> {
         .collect()
 }
 
-pub fn part1_count_points_tail_visited(input: &str) -> Result<usize, ParseError> {
-    let moves = parse_input(input)?;
-
-    let mut rope = Rope::new();
-
+fn count_points_tails_visited(moves: Vec<Motion>, rope: &mut Rope) -> usize {
     let mut set: HashSet<Point> = HashSet::new();
 
     for (direction, steps) in moves {
         for _ in 0..steps {
-            Rope::step(&mut rope.head, &mut rope.tail, &direction);
-            set.insert(rope.tail);
+            rope.step(&direction);
+            if let Some(point) = rope.tail() {
+                set.insert(*point);
+            }
         }
     }
 
-    Ok(set.len())
+    set.len()
+}
+
+pub fn part1_count_points_tail_visited(input: &str) -> Result<usize, ParseError> {
+    let moves = parse_input(input)?;
+
+    let mut rope = Rope::new(2);
+
+    let result = count_points_tails_visited(moves, &mut rope);
+
+    Ok(result)
+}
+
+pub fn part2_count_points_tails_visited(input: &str) -> Result<usize, ParseError> {
+    let moves = parse_input(input)?;
+
+    let mut rope = Rope::new(10);
+
+    let result = count_points_tails_visited(moves, &mut rope);
+
+    Ok(result)
 }
 
 #[cfg(test)]
@@ -226,6 +218,8 @@ mod tests {
     use super::*;
 
     const BASIC_INPUT: &str = "R 4\nU 4\nL 3\nD 1\nR 4\nD 1\nL 5\nR 2";
+
+    const LARGE_INPUT: &str = "R 5\nU 8\nL 8\nD 3\nR 17\nD 10\nL 25\nU 20";
 
     const INPUT: &str = include_str!("../input");
 
@@ -243,6 +237,33 @@ mod tests {
         let result = part1_count_points_tail_visited(INPUT)?;
 
         assert_eq!(result, 6212);
+
+        Ok(())
+    }
+
+    #[test]
+    fn part_2_basic_input_should_eq_1() -> Result<(), ParseError> {
+        let result = part2_count_points_tails_visited(BASIC_INPUT)?;
+
+        assert_eq!(result, 1);
+
+        Ok(())
+    }
+
+    #[test]
+    fn part_2_large_input_should_eq_36() -> Result<(), ParseError> {
+        let result = part2_count_points_tails_visited(LARGE_INPUT)?;
+
+        assert_eq!(result, 36);
+
+        Ok(())
+    }
+
+    #[test]
+    fn part_2_input_should_eq_value() -> Result<(), ParseError> {
+        let result = part2_count_points_tails_visited(INPUT)?;
+
+        assert_eq!(result, 2522);
 
         Ok(())
     }
