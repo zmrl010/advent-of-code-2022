@@ -1,5 +1,4 @@
 use std::{
-    cmp::Ordering,
     collections::HashSet,
     error::Error,
     fmt::{self, Display, Formatter},
@@ -7,14 +6,59 @@ use std::{
     str::FromStr,
 };
 
-use shared_lib::grid::{Point, Touch};
+use shared_lib::point;
 
-#[derive(Debug)]
+type Point = point::Point<isize>;
+
+#[derive(Debug, PartialEq, Eq)]
 pub enum Direction {
     Left,
     Right,
     Up,
     Down,
+}
+
+pub type Motion = (Direction, u8);
+
+impl FromStr for Direction {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let direction = match s {
+            "R" => Direction::Right,
+            "L" => Direction::Left,
+            "U" => Direction::Up,
+            "D" => Direction::Down,
+            _ => return Err(ParseError::Direction(s.to_string())),
+        };
+
+        Ok(direction)
+    }
+}
+
+impl Direction {
+    /// Get the opposite direction
+    ///
+    /// Returns a new instance of the direction that is directly opposite to this one
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use rope_bridge::Direction;
+    ///
+    /// let original = Direction::Left;
+    /// assert_eq!(original.opposite(), Direction::Right)
+    /// ```
+    pub fn opposite(&self) -> Self {
+        use Direction::*;
+
+        match self {
+            Left => Right,
+            Right => Left,
+            Up => Down,
+            Down => Up,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -37,12 +81,7 @@ impl Rope {
         Default::default()
     }
 
-    /// Move `head` by applying a `motion` and adjust `tail` accordingly
-    ///
-    /// # Arguments
-    ///
-    /// * `motion` - (direction, steps) tuple that describes a direction to move
-    /// toward and the number of steps to take to get there.
+    /// Move `head` one step in `direction` and adjust `tail` accordingly
     ///
     /// # Tail Movement Rules
     ///
@@ -51,84 +90,65 @@ impl Rope {
     ///
     /// * If `head` and `tail` aren't touching, and aren't in the same row
     /// and column, the `tail` **always** moves one step diagonally to keep up
-    pub fn apply_motion(&mut self, motion: Motion) {
-        let (direction, steps) = motion;
+    fn step(head: &mut Point, tail: &mut Point, direction: &Direction) {
+        *head = move_point(head, direction);
 
-        for _ in 0..steps {
-            self.step(&direction);
-        }
-    }
+        let x_diff = head.x.abs_diff(tail.x);
+        let y_diff = head.y.abs_diff(tail.y);
 
-    /// Take a single step toward `direction`
-    fn step(&mut self, direction: &Direction) {
-        move_point(&mut self.head, direction);
-
-        if self.head == self.tail {
+        if x_diff <= 1 && y_diff <= 1 {
             return;
         }
-
-        let x_diff = self.head.x.abs_diff(self.tail.x);
-        let y_diff = self.head.y.abs_diff(self.tail.y);
 
         match (x_diff, y_diff) {
             // If `head` is ever two steps directly up, down, left, or right
             // from the `tail`, the `tail` **must** also move one step in that direction
-            (2, 0) | (0, 2) => move_point(&mut self.tail, direction),
+            (2, 0) => {
+                if head.x > tail.x {
+                    tail.x += 1;
+                } else {
+                    tail.x -= 1;
+                };
+            }
+            (0, 2) => {
+                if head.y > tail.y {
+                    tail.y += 1;
+                } else {
+                    tail.y -= 1;
+                };
+            }
             // If `head` and `tail` aren't touching, and aren't in the same row
             // and column, the `tail` **always** moves one step diagonally to keep up
-            (2, 2) => {
-                let horizontal_direction = if self.head.x > self.tail.x {
-                    Direction::Right
+            (2, 1) | (1, 2) => {
+                if head.x > tail.x {
+                    tail.x += 1;
                 } else {
-                    Direction::Left
+                    tail.x -= 1;
                 };
-                move_point(&mut self.tail, &horizontal_direction);
-
-                let vertical_direction = if self.head.y > self.tail.y {
-                    Direction::Up
+                if head.y > tail.y {
+                    tail.y += 1;
                 } else {
-                    Direction::Down
+                    tail.y -= 1;
                 };
-                move_point(&mut self.tail, &vertical_direction);
             }
-            _ => {}
+            _ => unreachable!(),
         }
     }
 }
 
 /// Move a [`Point`] a single step in `direction`
-fn move_point(point: &mut Point, direction: &Direction) {
-    match direction {
-        Direction::Left => {
-            point.x -= 1;
-        }
-        Direction::Right => {
-            point.x += 1;
-        }
-        Direction::Up => {
-            point.y += 1;
-        }
-        Direction::Down => {
-            point.y -= 1;
-        }
-    }
-}
+///
+/// # Returns
+///
+/// New point with value adjusted depending on direction
+fn move_point(point: &Point, dir: &Direction) -> Point {
+    use Direction::*;
 
-pub type Motion = (Direction, u8);
-
-impl FromStr for Direction {
-    type Err = ParseError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let direction = match s {
-            "R" => Direction::Right,
-            "L" => Direction::Left,
-            "U" => Direction::Up,
-            "D" => Direction::Down,
-            _ => return Err(ParseError::Direction(s.to_string())),
-        };
-
-        Ok(direction)
+    match dir {
+        Up => (point.x, point.y + 1).into(),
+        Right => (point.x + 1, point.y).into(),
+        Left => (point.x - 1, point.y).into(),
+        Down => (point.x, point.y - 1).into(),
     }
 }
 
@@ -193,7 +213,7 @@ pub fn part1_count_points_tail_visited(input: &str) -> Result<usize, ParseError>
 
     for (direction, steps) in moves {
         for _ in 0..steps {
-            rope.step(&direction);
+            Rope::step(&mut rope.head, &mut rope.tail, &direction);
             set.insert(rope.tail);
         }
     }
@@ -222,7 +242,7 @@ mod tests {
     fn input_should_eq_value() -> Result<(), ParseError> {
         let result = part1_count_points_tail_visited(INPUT)?;
 
-        assert_eq!(result, 13);
+        assert_eq!(result, 6212);
 
         Ok(())
     }
