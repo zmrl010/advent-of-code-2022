@@ -5,7 +5,10 @@ use std::{
     str::FromStr,
 };
 
-use shared_lib::grid::{Grid, GridLike, ParseGridError, Point};
+use shared_lib::{
+    grid::{Grid, GridLike, ParseGridError},
+    point::Point,
+};
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Tree {

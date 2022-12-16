@@ -1,4 +1,5 @@
 pub mod grid;
+pub mod point;
 
 #[cfg(test)]
 mod tests {
