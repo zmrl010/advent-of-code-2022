@@ -3,7 +3,6 @@
 //! Module for [`Point`] structure that signifies a location on a 2D plane
 
 use std::{
-    cmp,
     fmt::{self, Display, Formatter},
     ops::{Add, AddAssign, Sub, SubAssign},
 };
@@ -13,6 +12,16 @@ use std::{
 pub struct Point<T = usize> {
     pub x: T,
     pub y: T,
+}
+
+impl<T> Point<T> {}
+
+impl<T: AddAssign + Copy> Point<T> {
+    /// Move point by adding another to it
+    pub fn move_add(&mut self, point: &Point<T>) {
+        self.x += point.x;
+        self.y += point.y;
+    }
 }
 
 impl<T: Display> Display for Point<T> {
@@ -74,22 +83,15 @@ impl<T> From<(T, T)> for Point<T> {
     }
 }
 
-/// Trait
-pub trait Touch {}
-
-impl Touch for Point {}
-
 /// Trait for operating between two points in relation to each other
 pub trait Relative {
     /// Compare self and other to determine if they are touching
     fn is_touching(&self, other: &Self) -> bool;
     /// Move self in relation to other
     fn move_relative(&mut self, other: &Self);
-    /// Get distance between self and other
-    fn distance(&self, other: &Self) -> usize;
 }
 
-impl Relative for Point {
+impl Relative for Point<isize> {
     fn move_relative(&mut self, other: &Self) {
         while !self.is_touching(other) {
             if self.x != other.x {
@@ -122,12 +124,5 @@ impl Relative for Point {
         let y_diff = self.y.abs_diff(other.y);
 
         x_diff <= 1 && y_diff <= 1
-    }
-
-    fn distance(&self, other: &Self) -> usize {
-        let delta_x = self.x.abs_diff(other.x);
-        let delta_y = self.y.abs_diff(other.y);
-
-        cmp::max(delta_x, delta_y)
     }
 }
