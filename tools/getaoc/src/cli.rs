@@ -5,26 +5,27 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
-    /// target puzzle year
+    /// Target puzzle year
     #[arg(short, long, default_value_t = date::this_year())]
     pub year: Year,
 
-    /// target puzzle day of month
+    /// Target puzzle day of month
     #[arg(short, long, default_value_t = date::day_of_month())]
     pub day: Day,
 
-    /// directory to save output files
+    /// Directory to save output files
     #[arg(default_value = "./")]
     pub outdir: PathBuf,
 
-    /// name of file to save puzzle input
+    /// Name of file to save puzzle input
     #[arg(short, long = "input", default_value = "input")]
     pub input_filename: String,
 
-    /// session id used for authentication.
+    /// Session id used for authentication.
     ///
-    /// found by inspecting https://adventofcode.com/
-    #[arg(short, long, env)]
+    /// This can be collected by logging into https://adventofcode.com/
+    /// and inspecting the session cookie.
+    #[arg(short, long, env, hide_env_values = true)]
     pub session: String,
 }
 
