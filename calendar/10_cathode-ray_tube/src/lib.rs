@@ -29,28 +29,26 @@ fn sum_signal_strengths(cpu: &mut CPU, program: Vec<Instruction>) -> i32 {
         match instruction {
             Instruction::Noop => {
                 cycle += 1;
+
+                if let 20 | 60 | 100 | 140 | 180 | 220 = cycle {
+                    sum += cpu.x * cycle as i32;
+                }
             }
             Instruction::Addx(value) => {
                 cycle += 1;
 
-                match cycle {
-                    20 | 60 | 100 | 140 | 180 | 220 => {
-                        sum += cpu.x * cycle as i32;
-                    }
-                    _ => {}
+                if let 20 | 60 | 100 | 140 | 180 | 220 = cycle {
+                    sum += cpu.x * cycle as i32;
                 }
 
                 cycle += 1;
 
+                if let 20 | 60 | 100 | 140 | 180 | 220 = cycle {
+                    sum += cpu.x * cycle as i32;
+                }
+
                 cpu.x += value;
             }
-        }
-
-        match cycle {
-            20 | 60 | 100 | 140 | 180 | 220 => {
-                sum += cpu.x * cycle as i32;
-            }
-            _ => {}
         }
     }
 
@@ -113,12 +111,6 @@ pub fn parse_input(input: &str) -> Result<Vec<Instruction>, Error> {
         .collect()
 }
 
-/// Maybe you can learn something by looking at the value
-/// of the X register throughout execution. For now,
-/// consider the signal strength (the cycle number multiplied
-/// by the value of the X register) during the 20th cycle and
-/// every 40 cycles after that (that is, during the 20th, 60th,
-/// 100th, 140th, 180th, and 220th cycles)
 pub fn part1(input: &str) -> Result<i32, Error> {
     let input = parse_input(input)?;
 
@@ -145,6 +137,6 @@ mod tests {
     #[test]
     fn input_should_eq_value() {
         let result = part1(INPUT).unwrap();
-        assert_eq!(result, 13140);
+        assert_eq!(result, 14060);
     }
 }
