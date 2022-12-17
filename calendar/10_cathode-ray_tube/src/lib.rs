@@ -45,6 +45,43 @@ impl CPU {
         signal
     }
 
+    fn draw(&mut self, program: &[Instruction]) -> String {
+        let mut screen = String::new();
+
+        for instruction in program {
+            match instruction {
+                Instruction::Noop => {
+                    self.cycle += 1;
+                    self.draw_sprite(&mut screen);
+                }
+                Instruction::Addx(value) => {
+                    self.cycle += 1;
+                    self.draw_sprite(&mut screen);
+                    self.cycle += 1;
+                    self.draw_sprite(&mut screen);
+
+                    self.x += value;
+                }
+            }
+        }
+
+        screen
+    }
+
+    fn draw_sprite(&self, display: &mut String) {
+        let idx = ((self.cycle - 1) % 40) as i32;
+
+        if (self.x - 1..=self.x + 1).contains(&idx) {
+            display.push('#');
+        } else {
+            display.push('.');
+        }
+
+        if self.cycle % 40 == 0 {
+            display.push('\n');
+        }
+    }
+
     fn compute_signal_modifier(&self) -> i32 {
         self.x * self.cycle as i32
     }
@@ -114,12 +151,12 @@ pub fn part1(input: &str) -> Result<i32, Error> {
     Ok(sum)
 }
 
-pub fn part2(input: &str) -> Result<i32, Error> {
+pub fn part2(input: &str) -> Result<String, Error> {
     let input = parse_input(input)?;
 
     let mut cpu = CPU::new();
 
-    let sum = cpu.execute(&input);
+    let sum = cpu.draw(&input);
 
     Ok(sum)
 }
@@ -144,14 +181,22 @@ mod tests {
     }
 
     #[test]
-    fn part2_basic_input_should_eq_13140() {
+    fn part2_basic_input_should_draw_screen() {
         let result = part2(BASIC_INPUT).unwrap();
-        assert_eq!(result, 13140);
+
+        let expected = "##..##..##..##..##..##..##..##..##..##..
+###...###...###...###...###...###...###.
+####....####....####....####....####....
+#####.....#####.....#####.....#####.....
+######......######......######......####
+#######.......#######.......#######.....";
+
+        assert_eq!(result, expected);
     }
 
     #[test]
     fn part2_input_should_eq_value() {
         let result = part2(INPUT).unwrap();
-        assert_eq!(result, 14060);
+        assert_eq!(result, String::from(""));
     }
 }
