@@ -5,56 +5,49 @@ use std::{
 };
 
 #[derive(Debug)]
-struct Clock {
-    cycle: u32,
-}
-
-#[derive(Debug)]
 struct CPU {
     x: i32,
+    cycle: u16,
 }
 
 impl CPU {
     fn new() -> Self {
-        Self { x: 1 }
+        Self { x: 1, cycle: 0 }
     }
-}
 
-fn sum_signal_strengths(cpu: &mut CPU, program: Vec<Instruction>) -> i32 {
-    let mut cycle = 0u16;
+    fn increment_cycle(&mut self, signal: &mut i32, next_cycle: &mut u16) {
+        self.cycle += 1;
 
-    let mut sum = 0i32;
-
-    for instruction in program {
-        match instruction {
-            Instruction::Noop => {
-                cycle += 1;
-
-                if let 20 | 60 | 100 | 140 | 180 | 220 = cycle {
-                    sum += cpu.x * cycle as i32;
-                }
-            }
-            Instruction::Addx(value) => {
-                cycle += 1;
-
-                if let 20 | 60 | 100 | 140 | 180 | 220 = cycle {
-                    sum += cpu.x * cycle as i32;
-                }
-
-                cycle += 1;
-
-                if let 20 | 60 | 100 | 140 | 180 | 220 = cycle {
-                    sum += cpu.x * cycle as i32;
-                }
-
-                cpu.x += value;
-            }
+        if *next_cycle == self.cycle {
+            *signal += self.compute_signal_modifier();
+            *next_cycle += 40;
         }
     }
 
-    dbg!(cycle);
+    fn execute(&mut self, program: &[Instruction]) -> i32 {
+        let mut signal = 0i32;
+        let mut next_cycle = 20;
 
-    sum
+        for instruction in program {
+            match instruction {
+                Instruction::Noop => {
+                    self.increment_cycle(&mut signal, &mut next_cycle);
+                }
+                Instruction::Addx(value) => {
+                    self.increment_cycle(&mut signal, &mut next_cycle);
+                    self.increment_cycle(&mut signal, &mut next_cycle);
+
+                    self.x += value;
+                }
+            }
+        }
+
+        signal
+    }
+
+    fn compute_signal_modifier(&self) -> i32 {
+        self.x * self.cycle as i32
+    }
 }
 
 #[derive(Debug)]
@@ -116,7 +109,17 @@ pub fn part1(input: &str) -> Result<i32, Error> {
 
     let mut cpu = CPU::new();
 
-    let sum = sum_signal_strengths(&mut cpu, input);
+    let sum = cpu.execute(&input);
+
+    Ok(sum)
+}
+
+pub fn part2(input: &str) -> Result<i32, Error> {
+    let input = parse_input(input)?;
+
+    let mut cpu = CPU::new();
+
+    let sum = cpu.execute(&input);
 
     Ok(sum)
 }
@@ -137,6 +140,18 @@ mod tests {
     #[test]
     fn input_should_eq_value() {
         let result = part1(INPUT).unwrap();
+        assert_eq!(result, 14060);
+    }
+
+    #[test]
+    fn part2_basic_input_should_eq_13140() {
+        let result = part2(BASIC_INPUT).unwrap();
+        assert_eq!(result, 13140);
+    }
+
+    #[test]
+    fn part2_input_should_eq_value() {
+        let result = part2(INPUT).unwrap();
         assert_eq!(result, 14060);
     }
 }
