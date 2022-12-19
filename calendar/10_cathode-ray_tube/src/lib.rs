@@ -52,26 +52,26 @@ impl CPU {
             match instruction {
                 Instruction::Noop => {
                     self.cycle += 1;
-                    self.draw_sprite(&mut screen);
+                    self.draw_pixel(&mut screen);
                 }
                 Instruction::Addx(value) => {
                     self.cycle += 1;
-                    self.draw_sprite(&mut screen);
+                    self.draw_pixel(&mut screen);
                     self.cycle += 1;
-                    self.draw_sprite(&mut screen);
+                    self.draw_pixel(&mut screen);
 
                     self.x += value;
                 }
             }
         }
 
-        screen
+        screen.trim().to_string()
     }
 
-    fn draw_sprite(&self, display: &mut String) {
-        let idx = ((self.cycle - 1) % 40) as i32;
+    fn draw_pixel(&self, display: &mut String) {
+        let line_index = ((self.cycle - 1) % 40) as i32;
 
-        if (self.x - 1..=self.x + 1).contains(&idx) {
+        if (self.x - 1..=self.x + 1).contains(&line_index) {
             display.push('#');
         } else {
             display.push('.');
@@ -184,7 +184,8 @@ mod tests {
     fn part2_basic_input_should_draw_screen() {
         let result = part2(BASIC_INPUT).unwrap();
 
-        let expected = "##..##..##..##..##..##..##..##..##..##..
+        let expected = " \
+##..##..##..##..##..##..##..##..##..##..
 ###...###...###...###...###...###...###.
 ####....####....####....####....####....
 #####.....#####.....#####.....#####.....
@@ -197,6 +198,15 @@ mod tests {
     #[test]
     fn part2_input_should_eq_value() {
         let result = part2(INPUT).unwrap();
-        assert_eq!(result, String::from(""));
+        assert_eq!(
+            result,
+            " \
+###...##..###..#..#.####.#..#.####...##.
+#..#.#..#.#..#.#.#..#....#.#..#.......#.
+#..#.#..#.#..#.##...###..##...###.....#.
+###..####.###..#.#..#....#.#..#.......#.
+#....#..#.#....#.#..#....#.#..#....#..#.
+#....#..#.#....#..#.#....#..#.####..##.."
+        );
     }
 }
