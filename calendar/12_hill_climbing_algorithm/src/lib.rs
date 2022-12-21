@@ -16,12 +16,10 @@ pub fn part2(input: &str) -> Result<usize, ParseError> {
     let mut min = usize::MAX;
 
     let starting_positions: Vec<Pos> = graph
-        .clone()
         .iter()
         .enumerate()
         .flat_map(|(y, row)| -> Vec<Pos> {
-            row.clone()
-                .iter()
+            row.iter()
                 .enumerate()
                 .filter_map(|(x, tile)| {
                     if tile.char() == 'a' {
@@ -37,7 +35,6 @@ pub fn part2(input: &str) -> Result<usize, ParseError> {
         if let Some(result) = graph::find_shortest_path(&pos, graph.clone()) {
             min = min.min(result.0.len() - 1)
         }
-        // .expect(format!("no path found for {pos}").as_str());
     }
 
     Ok(min)
