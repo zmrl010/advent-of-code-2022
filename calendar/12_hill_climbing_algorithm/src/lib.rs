@@ -1,11 +1,11 @@
 mod graph;
 
-use graph::{Graph, ParseError};
+use graph::{Graph, ParseError, Pos};
 
 pub fn part1(input: &str) -> Result<usize, ParseError> {
     let graph: Graph = input.parse()?;
 
-    let result = graph::find_shortest_path(graph).expect("no path found");
+    let result = graph::find_shortest_path_from_start(graph).expect("no path found");
 
     Ok(result.0.len() - 1)
 }
@@ -13,9 +13,34 @@ pub fn part1(input: &str) -> Result<usize, ParseError> {
 pub fn part2(input: &str) -> Result<usize, ParseError> {
     let graph: Graph = input.parse()?;
 
-    let result = graph::find_shortest_path(graph).expect("no path found");
+    let mut min = usize::MAX;
 
-    Ok(result.0.len() - 1)
+    let starting_positions: Vec<Pos> = graph
+        .clone()
+        .iter()
+        .enumerate()
+        .flat_map(|(y, row)| -> Vec<Pos> {
+            row.clone()
+                .iter()
+                .enumerate()
+                .filter_map(|(x, tile)| {
+                    if tile.char() == 'a' {
+                        return Some(Pos(x, y));
+                    }
+                    None
+                })
+                .collect()
+        })
+        .collect();
+
+    for pos in starting_positions {
+        if let Some(result) = graph::find_shortest_path(&pos, graph.clone()) {
+            min = min.min(result.0.len() - 1)
+        }
+        // .expect(format!("no path found for {pos}").as_str());
+    }
+
+    Ok(min)
 }
 
 #[cfg(test)]
@@ -56,7 +81,7 @@ mod tests {
     fn part2_basic_input_eq_value() -> Result<(), ParseError> {
         let result = part2(INPUT)?;
 
-        assert_eq!(result, 394);
+        assert_eq!(result, 388);
 
         Ok(())
     }
