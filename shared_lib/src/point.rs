@@ -7,14 +7,14 @@ use std::{
     ops::{Add, AddAssign, Sub, SubAssign},
 };
 
+use num::{self, traits::NumAssignOps, Integer, Signed};
+
 /// Index on a 2D grid
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Point<T = usize> {
     pub x: T,
     pub y: T,
 }
-
-impl<T> Point<T> {}
 
 impl<T: AddAssign + Copy> Point<T> {
     /// Move point by adding another to it
@@ -91,21 +91,25 @@ pub trait Relative {
     fn move_relative(&mut self, other: &Self);
 }
 
-impl Relative for Point<isize> {
+impl<T> Relative for Point<T>
+where
+    T: NumAssignOps<T> + Integer + Signed + Clone,
+{
+    // impl Relative for Point<isize> {
     fn move_relative(&mut self, other: &Self) {
         while !self.is_touching(other) {
             if self.x != other.x {
                 if self.x < other.x {
-                    self.x += 1;
+                    self.x += T::one();
                 } else if self.x > other.x {
-                    self.x -= 1;
+                    self.x -= T::one();
                 }
             }
             if self.y != other.y {
                 if self.y < other.y {
-                    self.y += 1;
+                    self.y += T::one();
                 } else {
-                    self.y -= 1;
+                    self.y -= T::one();
                 }
             }
         }
@@ -120,9 +124,9 @@ impl Relative for Point<isize> {
             return true;
         }
 
-        let x_diff = self.x.abs_diff(other.x);
-        let y_diff = self.y.abs_diff(other.y);
+        let x_diff = num::abs_sub(self.x.clone(), other.x.clone());
+        let y_diff = num::abs_sub(self.y.clone(), other.y.clone());
 
-        x_diff <= 1 && y_diff <= 1
+        x_diff <= T::one() && y_diff <= T::one()
     }
 }

@@ -21,6 +21,9 @@ pub trait GridLike<T> {
 
     /// Get the element at a given point
     fn get(&self, p: Point) -> &T;
+
+    // /// Find an item in the grid, returning [`Some(value)`] if found, else [`None`]
+    // fn find(&self, item: &T) -> Option<&T>;
 }
 
 #[derive(Debug)]
@@ -88,12 +91,12 @@ impl<T> FromIterator<T> for Grid<T> {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let items: Vec<T> = iter.into_iter().collect();
 
-        let width = (items.len() as f64).sqrt().floor() as usize;
+        let size = (items.len() as f64).sqrt().floor() as usize;
 
         Self {
             items,
-            width,
-            height: width,
+            width: size,
+            height: size,
         }
     }
 }
