@@ -122,8 +122,6 @@ pub fn part2(input: &str) -> usize {
 
     packets.sort();
 
-    // dbg!(&packets);
-
     let decoder = packets
         .iter()
         .enumerate()
