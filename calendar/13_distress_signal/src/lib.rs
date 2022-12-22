@@ -64,6 +64,7 @@ type PacketPair = (Packet, Packet);
 
 fn parse_input(input: &str) -> Result<Vec<PacketPair>, ParseError> {
     input
+        .trim()
         .split("\n\n")
         .map(|line| {
             let raw_packets = line
@@ -96,8 +97,45 @@ pub fn part1(input: &str) -> Result<usize, ParseError> {
     Ok(sum)
 }
 
-pub fn part2(_input: &str) -> Result<usize, ParseError> {
-    todo!()
+pub fn part2(input: &str) -> usize {
+    let mut packets: Vec<Packet> = input
+        .trim()
+        .lines()
+        .filter_map(|line| {
+            let line = line.trim();
+
+            if line.is_empty() {
+                return None;
+            }
+
+            serde_json::from_str(line).ok()
+        })
+        .collect();
+
+    let divider_packets = (
+        Packet::List(vec![Packet::List(vec![Packet::Integer(2)])]),
+        Packet::List(vec![Packet::List(vec![Packet::Integer(6)])]),
+    );
+
+    packets.push(divider_packets.0.clone());
+    packets.push(divider_packets.1.clone());
+
+    packets.sort();
+
+    // dbg!(&packets);
+
+    let decoder = packets
+        .iter()
+        .enumerate()
+        .filter_map(|(i, packet)| -> Option<usize> {
+            if *packet == divider_packets.0 || *packet == divider_packets.1 {
+                return Some(i + 1);
+            }
+
+            None
+        });
+
+    decoder.product()
 }
 
 #[cfg(test)]
@@ -126,20 +164,16 @@ mod tests {
     }
 
     #[test]
-    fn part2_basic_input_eq_29() -> Result<(), ParseError> {
-        let result = part2(BASIC_INPUT)?;
+    fn part2_basic_input_eq_140() {
+        let result = part2(BASIC_INPUT);
 
-        assert_eq!(result, 29);
-
-        Ok(())
+        assert_eq!(result, 140)
     }
 
     #[test]
-    fn part2_basic_input_eq_value() -> Result<(), ParseError> {
-        let result = part2(INPUT)?;
+    fn part2_basic_input_eq_value() {
+        let result = part2(INPUT);
 
-        assert_eq!(result, 388);
-
-        Ok(())
+        assert_eq!(result, 21691);
     }
 }
