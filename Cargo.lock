@@ -1018,6 +1018,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "regolith_reservoir"
+version = "0.1.0"
+
+[[package]]
 name = "remove_dir_all"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1274,6 +1278,10 @@ dependencies = [
  "remove_dir_all",
  "winapi",
 ]
+
+[[package]]
+name = "template"
+version = "0.1.0"
 
 [[package]]
 name = "termcolor"
