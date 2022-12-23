@@ -1,0 +1,11 @@
+1. parse input into grid
+2. set a flag to determine when a unit has fallen all the way through
+
+3. while sand has not fallen through
+   - drop sand from `+`
+   - if sand is blocked
+     - try moving 1 step down and left
+       - if blocked try moving 1 step down and right
+         - else sand comes to rest
+
+4. Return number of sand grains

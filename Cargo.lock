@@ -1020,6 +1020,9 @@ dependencies = [
 [[package]]
 name = "regolith_reservoir"
 version = "0.1.0"
+dependencies = [
+ "pathfinding",
+]
 
 [[package]]
 name = "remove_dir_all"

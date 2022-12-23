@@ -22,8 +22,8 @@ pub trait GridLike<T> {
     /// Get the element at a given point
     fn get(&self, p: Point) -> &T;
 
-    // /// Find an item in the grid, returning [`Some(value)`] if found, else [`None`]
-    // fn find(&self, item: &T) -> Option<&T>;
+    /// Set the element at a given point to value
+    fn set(&mut self, p: Point, value: T);
 }
 
 #[derive(Debug)]
@@ -121,5 +121,9 @@ impl<T> GridLike<T> for Grid<T> {
 
     fn get(&self, p: Point) -> &T {
         &self.items[p.y * self.width + p.x]
+    }
+
+    fn set(&mut self, p: Point, v: T) {
+        self.items[p.y * self.width + p.x] = v;
     }
 }
