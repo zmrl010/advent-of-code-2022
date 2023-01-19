@@ -8,6 +8,16 @@ pub struct Point {
     y: usize,
 }
 
+impl Point {
+    pub fn new(x: usize, y: usize) -> Self {
+        Self { x, y }
+    }
+
+    pub fn as_tuple(&self) -> (usize, usize) {
+        (self.x, self.y)
+    }
+}
+
 impl From<(usize, usize)> for Point {
     fn from((x, y): (usize, usize)) -> Self {
         Self { x, y }
@@ -104,8 +114,47 @@ pub fn part1(input: &str) -> usize {
     count
 }
 
-pub fn part2(_input: &str) -> usize {
-    todo!()
+pub fn part2(input: &str) -> usize {
+    let mut grid = parse_input(input);
+    let mut count = 0usize;
+
+    loop {
+        let mut current = START;
+        let mut at_rest = false;
+
+        if grid.has_vertex((START.x, START.y)) {
+            break;
+        }
+
+        while !at_rest {
+            if current.y < grid.height + 1 && !grid.has_vertex((current.x, current.y + 1)) {
+                current.y += 1;
+            } else if current.x > 0 && !grid.has_vertex((current.x - 1, current.y + 1)) {
+                current.x -= 1;
+                current.y += 1;
+            } else if !grid.has_vertex((current.x + 1, current.y + 1)) {
+                current.x += 1;
+                current.y += 1;
+            } else {
+                at_rest = true;
+            }
+        }
+
+        let newly_added = grid.add_vertex((current.x, current.y));
+
+        if !newly_added {
+            panic!(
+                "Failed attempt to add a Grid vertex that already existed. ({}, {})",
+                current.x, current.y
+            )
+        }
+
+        count += 1;
+
+        dbg!(current);
+    }
+
+    count
 }
 
 #[cfg(test)]
@@ -133,7 +182,7 @@ mod tests {
     fn part2_basic_input_result_eq_expected() {
         let result = part2(BASIC_INPUT);
 
-        assert_eq!(result, 0)
+        assert_eq!(result, 93)
     }
 
     #[test]
