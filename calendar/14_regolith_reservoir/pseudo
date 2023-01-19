@@ -3,6 +3,7 @@
 
 3. while sand has not fallen through
    - drop sand from `+`
+     - track sand starting from `(500,0)`, incrementing y value by one until blocked
    - if sand is blocked
      - try moving 1 step down and left
        - if blocked try moving 1 step down and right
