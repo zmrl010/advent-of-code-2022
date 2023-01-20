@@ -1,7 +1,5 @@
 use pathfinding::prelude::Grid;
 
-pub type Vertex = (usize, usize);
-
 #[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Point {
     x: usize,
@@ -34,23 +32,19 @@ pub fn parse_input(input: &str) -> Grid {
     input
         .trim()
         .lines()
-        .flat_map(|line| -> Vec<Vertex> {
+        .flat_map(|line| {
             let mut path = Vec::new();
 
-            let mut points = line
-                .trim()
-                .split(" -> ")
-                .map(|raw_point| {
-                    raw_point
-                        .split_once(",")
-                        .expect("raw point should contain `,`")
-                })
-                .map(|(x, y)| {
-                    let x = x.parse().expect("left side should be a valid integer");
-                    let y = y.parse().expect("right side should be a valid integer");
+            let mut points = line.trim().split(" -> ").map(|raw_point| {
+                let (x, y) = raw_point
+                    .split_once(",")
+                    .expect("raw point should contain `,`");
 
-                    Point { x, y }
-                });
+                let x = x.parse().expect("left side should be a valid integer");
+                let y = y.parse().expect("right side should be a valid integer");
+
+                Point::from((x, y))
+            });
 
             if let Some(mut prev) = points.next() {
                 while let Some(current) = points.next() {
@@ -114,44 +108,54 @@ pub fn part1(input: &str) -> usize {
     count
 }
 
+/// Include a floor that spans across the entire Grid width
+///
+/// * Add 2 rows to the grid
+/// * Insert vertices across the entire width of the last row
+/// * Double width
+fn with_floor(mut grid: Grid) -> Grid {
+    let width = grid.width * 2;
+    grid.resize(width, grid.height + 2);
+
+    let y = grid.height - 1;
+    for x in 0..width {
+        grid.add_vertex((x, y));
+    }
+
+    grid
+}
+
 pub fn part2(input: &str) -> usize {
-    let mut grid = parse_input(input);
+    let mut grid = with_floor(parse_input(input));
     let mut count = 0usize;
 
-    loop {
+    'outer: loop {
         let mut current = START;
-        let mut at_rest = false;
 
-        if grid.has_vertex((START.x, START.y)) {
+        loop {
+            if !grid.has_vertex((current.x, current.y + 1)) {
+                current = (current.x, current.y + 1).into();
+                continue;
+            }
+
+            if !grid.has_vertex((current.x - 1, current.y + 1)) {
+                current = (current.x - 1, current.y + 1).into();
+                continue;
+            }
+
+            if !grid.has_vertex((current.x + 1, current.y + 1)) {
+                current = (current.x + 1, current.y + 1).into();
+                continue;
+            }
+
+            grid.add_vertex((current.x, current.y));
+            count += 1;
             break;
         }
 
-        while !at_rest {
-            if current.y < grid.height + 1 && !grid.has_vertex((current.x, current.y + 1)) {
-                current.y += 1;
-            } else if current.x > 0 && !grid.has_vertex((current.x - 1, current.y + 1)) {
-                current.x -= 1;
-                current.y += 1;
-            } else if !grid.has_vertex((current.x + 1, current.y + 1)) {
-                current.x += 1;
-                current.y += 1;
-            } else {
-                at_rest = true;
-            }
+        if current == START {
+            break 'outer;
         }
-
-        let newly_added = grid.add_vertex((current.x, current.y));
-
-        if !newly_added {
-            panic!(
-                "Failed attempt to add a Grid vertex that already existed. ({}, {})",
-                current.x, current.y
-            )
-        }
-
-        count += 1;
-
-        dbg!(current);
     }
 
     count
@@ -189,6 +193,6 @@ mod tests {
     fn part2_input_result_eq_expected() {
         let result = part2(INPUT);
 
-        assert_eq!(result, 0);
+        assert_eq!(result, 23416);
     }
 }
