@@ -5,3 +5,6 @@ edition = "2021"
 
 [dependencies]
 pathfinding = "^4.2"
+regex = "1.7.1"
+lazy_static = "1.4"
+anyhow = "1"
