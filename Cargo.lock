@@ -43,6 +43,7 @@ name = "beacon_exclusion_zone"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "itertools",
  "lazy_static",
  "pathfinding",
  "regex",
